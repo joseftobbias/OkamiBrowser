@@ -1,0 +1,706 @@
+package com.jhaiian.clint.mediacapture
+
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import android.content.Intent
+import android.content.res.Configuration
+import android.net.Uri
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.AudioFile
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Subtitles
+import androidx.compose.material.icons.filled.VideoFile
+import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.preference.PreferenceManager
+import com.jhaiian.clint.R
+import com.jhaiian.clint.downloads.formatElapsed
+import com.jhaiian.clint.ui.ClintCheckbox
+import com.jhaiian.clint.ui.ClintDialogStatusBarEffect
+import com.jhaiian.clint.ui.listscreen.ListMenuItem
+import com.jhaiian.clint.ui.listscreen.PopupShape
+import com.jhaiian.clint.ui.theme.LocalClintColors
+import com.jhaiian.clint.util.formatFileSize
+import java.util.Locale
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MediaCaptureDialog(
+    tabId: String,
+    hideStatusBar: Boolean,
+    hideSystemNavigation: Boolean,
+    onDismiss: () -> Unit,
+    onCopyLink: (String) -> Unit,
+    onPreviewMediaStarted: () -> Unit,
+    onDownload: (DetectedMedia, DetectedMedia?, List<DetectedMedia>, Long?, String?) -> Unit,
+    isYouTube: Boolean = false,
+    onGetYtdlnis: () -> Unit = {}
+) {
+    val colors = LocalClintColors.current
+    val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val detectedItems by MediaCaptureStore.observe(tabId).collectAsState()
+    val prefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
+    var convertTsToMp4 by remember { mutableStateOf(prefs.getBoolean(MEDIA_CAPTURE_CONVERT_TS_TO_MP4_PREF, MEDIA_CAPTURE_CONVERT_TS_TO_MP4_DEFAULT)) }
+
+    var previewMedia by remember { mutableStateOf<DetectedMedia?>(null) }
+
+    val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+    val maxSheetHeight = if (isPortrait) {
+        (configuration.screenHeightDp.dp * 0.8f).coerceAtLeast(360.dp)
+    } else {
+        (configuration.screenHeightDp.dp * 0.8f).coerceAtLeast(280.dp)
+    }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = colors.popupBackground,
+        dragHandle = { BottomSheetDefaults.DragHandle(color = colors.divider) }
+    ) {
+        ClintDialogStatusBarEffect(hideStatusBar, hideSystemNavigation)
+        Column(Modifier.fillMaxWidth().heightIn(max = maxSheetHeight)) {
+            MediaCaptureHeader(
+                if (isYouTube) 0 else detectedItems.size,
+                MediaCaptureSortState.mode,
+                { MediaCaptureSortState.mode = it },
+                onDismiss,
+                showStatus = !isYouTube
+            )
+            HorizontalDivider(color = colors.popupStroke)
+            if (!isYouTube) {
+                MediaCaptureConvertTsRow(convertTsToMp4) { checked ->
+                    convertTsToMp4 = checked
+                    prefs.edit().putBoolean(MEDIA_CAPTURE_CONVERT_TS_TO_MP4_PREF, checked).apply()
+                }
+            }
+            if (isYouTube) {
+                MediaCaptureYouTubeState(Modifier.weight(1f, fill = false), onGetYtdlnis)
+            } else if (detectedItems.isEmpty()) {
+                MediaCaptureEmptyState()
+            } else {
+                val sortMode = MediaCaptureSortState.mode
+                val video = sortMediaCapture(detectedItems.filter { it.kind == MediaKind.VIDEO }, sortMode)
+                val bestIds = remember(detectedItems) { bestQualityIds(detectedItems) }
+                val videoOptions = remember(detectedItems, sortMode) {
+                    val options = buildVideoOptions(video, detectedItems)
+                    if (sortMode == MediaCaptureSort.SIZE) options.sortedByDescending { optionEstimatedBytes(it) ?: -1L } else options
+                }
+                val bestKey = remember(detectedItems, bestIds) {
+                    detectedItems.firstOrNull { it.id in bestIds }?.let { best ->
+                        MediaCaptureOption(best, compatibleAudioTracks(best, detectedItems).firstOrNull()).key
+                    }
+                }
+                val audio = sortMediaCapture(detectedItems.filter { it.kind == MediaKind.AUDIO }, sortMode)
+                val subtitles = sortMediaCapture(detectedItems.filter { it.kind == MediaKind.SUBTITLE }, sortMode)
+                LazyColumn(Modifier.fillMaxWidth().weight(1f, fill = false).padding(bottom = 8.dp)) {
+                    if (video.isNotEmpty()) {
+                        item(key = "header_video") { MediaCaptureSectionHeader(stringResource(R.string.media_capture_section_video)) }
+                        items(videoOptions, key = { it.key }) { option ->
+                            val media = option.video
+                            MediaCaptureRow(
+                                media,
+                                onCopyLink,
+                                audio = option.audio,
+                                audioOrdinal = option.audioOrdinal,
+                                isBest = option.key == bestKey,
+                                onPreview = { onPreviewMediaStarted(); VideoPreviewActivity.start(context, tabId, media.id, option.audio?.id) }
+                            ) { estimatedBytes, containerExt -> onDownload(media, option.audio, detectedItems, estimatedBytes, containerExt) }
+                        }
+                    }
+                    if (audio.isNotEmpty()) {
+                        item(key = "header_audio") { MediaCaptureSectionHeader(stringResource(R.string.media_capture_section_audio)) }
+                        items(audio, key = { it.id }) { media ->
+                            MediaCaptureRow(media, onCopyLink, onPreview = { onPreviewMediaStarted(); previewMedia = media }) { estimatedBytes, containerExt -> onDownload(media, null, detectedItems, estimatedBytes, containerExt) }
+                        }
+                    }
+                    if (subtitles.isNotEmpty()) {
+                        item(key = "header_subtitles") { MediaCaptureSectionHeader(stringResource(R.string.media_capture_section_subtitles)) }
+                        items(subtitles, key = { it.id }) { media ->
+                            MediaCaptureRow(media, onCopyLink, onPreview = { previewMedia = media }) { estimatedBytes, containerExt -> onDownload(media, null, detectedItems, estimatedBytes, containerExt) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    previewMedia?.let { target ->
+        when (target.kind) {
+            MediaKind.AUDIO -> AudioPreviewDialog(
+                media = target,
+                hideStatusBar = hideStatusBar,
+                hideSystemNavigation = hideSystemNavigation,
+                onDismiss = { previewMedia = null }
+            )
+            else -> SubtitlePreviewDialog(
+                media = target,
+                hideStatusBar = hideStatusBar,
+                hideSystemNavigation = hideSystemNavigation,
+                onDismiss = { previewMedia = null }
+            )
+        }
+    }
+}
+
+fun pickPairedAudio(media: DetectedMedia, all: List<DetectedMedia>): DetectedMedia? =
+    compatibleAudioTracks(media, all).firstOrNull()
+
+fun pickSoleSubtitle(media: DetectedMedia, all: List<DetectedMedia>): DetectedMedia? {
+    val group = media.groupUrl ?: return null
+    val subtitles = all.filter { it.kind == MediaKind.SUBTITLE && it.groupUrl == group }
+    return subtitles.singleOrNull()
+}
+
+fun suggestMediaCaptureFilename(media: DetectedMedia, pageTitle: String, containerExtension: String? = null): String {
+    val fromUrl = runCatching { Uri.parse(media.url).lastPathSegment }.getOrNull()
+    if (!fromUrl.isNullOrBlank() && fromUrl.contains('.') && !fromUrl.endsWith(".m3u8") && !fromUrl.endsWith(".mpd")) {
+        return fromUrl
+    }
+    val ext = when {
+        media.kind == MediaKind.SUBTITLE && (media.isHlsPlaylist || media.format.equals("HLS", true)) -> "vtt"
+        media.format.equals("HLS", true) || media.format.equals("DASH", true) -> containerExtension ?: "mp4"
+        else -> media.format.lowercase()
+    }
+    return "${sanitizeMediaCaptureFilenameBase(pageTitle)}.$ext"
+}
+
+private fun sanitizeMediaCaptureFilenameBase(title: String): String {
+    val cleaned = title.replace(Regex("[/\\\\:*?\"<>|]"), "_").trim().take(80).trim()
+    return cleaned.ifBlank { "media" }
+}
+
+fun isMediaCaptureManifestBased(media: DetectedMedia): Boolean =
+    media.kind != MediaKind.SUBTITLE && media.groupUrl != null &&
+        (media.format.equals("HLS", true) || media.format.equals("DASH", true))
+
+@Composable
+private fun MediaCaptureHeader(
+    count: Int,
+    sortMode: MediaCaptureSort,
+    onSortSelected: (MediaCaptureSort) -> Unit,
+    onDismiss: () -> Unit,
+    showStatus: Boolean = true
+) {
+    val colors = LocalClintColors.current
+    var sortMenuOpen by remember { mutableStateOf(false) }
+    Row(
+        Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                stringResource(R.string.media_capture_dialog_title),
+                color = colors.popupText,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (showStatus) {
+                Text(
+                    if (count > 0) {
+                        stringResource(R.string.media_capture_count_label, count)
+                    } else {
+                        stringResource(R.string.media_capture_scanning)
+                    },
+                    color = colors.secondaryText,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+        }
+        if (count > 1) {
+            Box {
+                IconButton(onClick = { sortMenuOpen = true }) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Sort,
+                        contentDescription = stringResource(R.string.downloads_sort),
+                        tint = colors.iconTint
+                    )
+                }
+                DropdownMenu(
+                    expanded = sortMenuOpen,
+                    onDismissRequest = { sortMenuOpen = false },
+                    shape = PopupShape,
+                    containerColor = colors.popupBackground,
+                    border = BorderStroke(1.dp, colors.popupStroke)
+                ) {
+                    ListMenuItem(Icons.Filled.HighQuality, stringResource(R.string.media_capture_sort_quality), sortMode == MediaCaptureSort.QUALITY) {
+                        sortMenuOpen = false
+                        onSortSelected(MediaCaptureSort.QUALITY)
+                    }
+                    ListMenuItem(Icons.Filled.FormatSize, stringResource(R.string.downloads_sort_by_size), sortMode == MediaCaptureSort.SIZE) {
+                        sortMenuOpen = false
+                        onSortSelected(MediaCaptureSort.SIZE)
+                    }
+                    ListMenuItem(Icons.Filled.ArrowDownward, stringResource(R.string.media_capture_sort_newest), sortMode == MediaCaptureSort.NEWEST) {
+                        sortMenuOpen = false
+                        onSortSelected(MediaCaptureSort.NEWEST)
+                    }
+                    ListMenuItem(Icons.Filled.ArrowUpward, stringResource(R.string.media_capture_sort_oldest), sortMode == MediaCaptureSort.OLDEST) {
+                        sortMenuOpen = false
+                        onSortSelected(MediaCaptureSort.OLDEST)
+                    }
+                }
+            }
+        }
+        IconButton(onClick = onDismiss) {
+            Icon(
+                Icons.Filled.Close,
+                contentDescription = stringResource(R.string.media_capture_close),
+                tint = colors.iconTint
+            )
+        }
+    }
+}
+
+@Composable
+private fun MediaCaptureConvertTsRow(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val colors = LocalClintColors.current
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(start = 5.dp, end = 20.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ClintCheckbox(checked = checked, onCheckedChange = onCheckedChange)
+        Text(
+            stringResource(R.string.media_capture_convert_ts_to_mp4),
+            color = colors.onSurface,
+            fontSize = 13.sp,
+            modifier = Modifier.weight(1f).padding(start = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun MediaCaptureEmptyState() {
+    val colors = LocalClintColors.current
+    Column(
+        Modifier.fillMaxWidth().padding(vertical = 48.dp, horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            Icons.Filled.VideoLibrary,
+            contentDescription = null,
+            tint = colors.secondaryText.copy(alpha = 0.5f),
+            modifier = Modifier.size(40.dp)
+        )
+        Text(
+            stringResource(R.string.media_capture_empty_state),
+            color = colors.secondaryText,
+            fontSize = 13.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 12.dp)
+        )
+    }
+}
+
+@Composable
+private fun MediaCaptureYouTubeState(modifier: Modifier, onGetYtdlnis: () -> Unit) {
+    val colors = LocalClintColors.current
+    Column(
+        modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 32.dp, horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            Icons.Filled.VideoLibrary,
+            contentDescription = null,
+            tint = colors.secondaryText.copy(alpha = 0.5f),
+            modifier = Modifier.size(40.dp)
+        )
+        Text(
+            stringResource(R.string.media_capture_youtube_title),
+            color = colors.popupText,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 12.dp)
+        )
+        Text(
+            stringResource(R.string.media_capture_youtube_message),
+            color = colors.secondaryText,
+            fontSize = 13.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 480.dp).padding(top = 8.dp)
+        )
+        Button(
+            onClick = onGetYtdlnis,
+            colors = ButtonDefaults.buttonColors(containerColor = colors.primary, contentColor = colors.onPrimary),
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.padding(top = 20.dp)
+        ) {
+            Icon(Icons.Filled.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(
+                stringResource(R.string.media_capture_youtube_get_ytdlnis),
+                fontSize = 14.sp,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun MediaCaptureSectionHeader(text: String) {
+    Text(
+        text,
+        color = LocalClintColors.current.secondaryText,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 0.5.sp,
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp)
+    )
+}
+
+private fun mediaKindIcon(kind: MediaKind): ImageVector = when (kind) {
+    MediaKind.VIDEO -> Icons.Filled.VideoFile
+    MediaKind.AUDIO -> Icons.Filled.AudioFile
+    MediaKind.SUBTITLE -> Icons.Filled.Subtitles
+}
+
+private fun formatBitrate(bitsPerSec: Long): String {
+    val mbps = bitsPerSec / 1_000_000.0
+    return if (mbps >= 1.0) {
+        String.format(Locale.US, "%.1f Mbps", mbps)
+    } else {
+        String.format(Locale.US, "%.0f Kbps", bitsPerSec / 1000.0)
+    }
+}
+
+@Composable
+internal fun mediaCaptureTitle(media: DetectedMedia): String {
+    media.label?.takeIf { it.isNotBlank() }?.let { return it }
+    if (media.width != null && media.height != null) return "${media.width}\u00D7${media.height}"
+    val name = remember(media.url) { runCatching { Uri.parse(media.url).lastPathSegment }.getOrNull() }
+    return name?.takeIf { it.isNotBlank() } ?: media.format
+}
+
+private fun bestQualityIds(items: List<DetectedMedia>): Set<String> =
+    setOfNotNull(sortMediaCapture(items.filter { it.kind == MediaKind.VIDEO }, MediaCaptureSort.QUALITY).firstOrNull()?.id)
+
+private fun mediaCaptureLanguage(media: DetectedMedia): String? {
+    if (media.kind == MediaKind.VIDEO) return null
+    val tag = media.language?.takeIf { it.isNotBlank() } ?: return null
+    val locale = Locale.forLanguageTag(tag.replace('_', '-'))
+    val localName = locale.getDisplayName(Locale.getDefault()).takeIf { it.isNotBlank() && !it.equals(tag, ignoreCase = true) }
+    val englishName = locale.getDisplayName(Locale.ENGLISH).takeIf { it.isNotBlank() && !it.equals(tag, ignoreCase = true) }
+    val name = localName ?: tag.uppercase(Locale.ROOT)
+    val label = media.label
+    if (label != null && listOfNotNull(localName, englishName).any { label.contains(it, ignoreCase = true) }) return null
+    return name
+}
+
+@Composable
+private fun mediaCaptureSubtitle(media: DetectedMedia, estimate: HlsSegmentEstimate?): String {
+    val parts = mutableListOf<String>()
+    parts += media.format
+    mediaCaptureLanguage(media)?.let { parts += it }
+    mediaCaptureCodecParts(media).forEach { parts += it }
+    media.bandwidthBitsPerSec?.takeIf { it > 0L }?.let { parts += formatBitrate(it) }
+    media.durationSeconds?.takeIf { it > 0.0 }?.let { parts += formatElapsed(it.toLong()) }
+    media.cueCount?.takeIf { it > 0 }?.let { parts += stringResource(R.string.media_capture_cue_count, it) }
+    if (estimate != null) {
+        parts += stringResource(R.string.media_capture_segments_count, estimate.segmentCount)
+        estimate.estimatedBytes?.takeIf { it > 0L }?.let {
+            parts += stringResource(R.string.media_capture_estimated_size, formatFileSize(it))
+        }
+    }
+    media.sizeBytes?.takeIf { it > 0L }?.let { parts += formatFileSize(it) }
+    if (media.isLive) parts += stringResource(R.string.media_capture_live_badge)
+    if (media.kind == MediaKind.VIDEO && media.hasAudio == false) {
+        parts += stringResource(R.string.media_capture_no_audio_badge)
+    }
+    return parts.joinToString("  \u2022  ")
+}
+
+@Composable
+private fun mediaCaptureCodecParts(media: DetectedMedia): List<String> {
+    val parts = mutableListOf<String>()
+    when (media.kind) {
+        MediaKind.VIDEO -> {
+            MediaCodecNames.videoLabel(media.codecs)?.let { parts += it }
+            media.frameRate?.let { parts += stringResource(R.string.media_capture_fps, formatFrameRate(it)) }
+        }
+        MediaKind.AUDIO -> {
+            MediaCodecNames.audioLabel(media.codecs)?.let { parts += it }
+            mediaCaptureChannels(media.channels)?.let { parts += it }
+        }
+        MediaKind.SUBTITLE -> Unit
+    }
+    return parts
+}
+
+private fun formatFrameRate(rate: Double): String {
+    val rounded = Math.round(rate)
+    return if (kotlin.math.abs(rate - rounded) < 0.01) rounded.toString() else String.format(Locale.getDefault(), "%.2f", rate)
+}
+
+@Composable
+private fun mediaCaptureChannels(channels: Int?): String? = when (channels) {
+    null, 0 -> null
+    1 -> stringResource(R.string.media_capture_channels_mono)
+    2 -> stringResource(R.string.media_capture_channels_stereo)
+    6 -> "5.1"
+    8 -> "7.1"
+    else -> stringResource(R.string.media_capture_channels_count, channels)
+}
+
+@Composable
+private fun mediaCaptureOptionLines(video: DetectedMedia, audio: DetectedMedia, estimatedBytes: Long?): List<String> {
+    val videoParts = mutableListOf<String>()
+    MediaCodecNames.videoLabel(video.codecs)?.let { videoParts += it }
+    video.frameRate?.let { videoParts += stringResource(R.string.media_capture_fps, formatFrameRate(it)) }
+    video.bandwidthBitsPerSec?.takeIf { it > 0L }?.let { videoParts += formatBitrate(it) }
+    val audioParts = mutableListOf<String>()
+    MediaCodecNames.audioLabel(audio.codecs)?.let { audioParts += it }
+    mediaCaptureChannels(audio.channels)?.let { audioParts += it }
+    audio.bandwidthBitsPerSec?.takeIf { it > 0L }?.let { audioParts += formatBitrate(it) }
+    val commonParts = mutableListOf<String>()
+    commonParts += video.format
+    (video.durationSeconds ?: audio.durationSeconds)?.takeIf { it > 0.0 }?.let { commonParts += formatElapsed(it.toLong()) }
+    estimatedBytes?.takeIf { it > 0L }?.let { commonParts += stringResource(R.string.media_capture_estimated_size, formatFileSize(it)) }
+    if (video.isLive) commonParts += stringResource(R.string.media_capture_live_badge)
+    val separator = "  \u2022  "
+    return listOfNotNull(
+        videoParts.takeIf { it.isNotEmpty() }?.let { stringResource(R.string.media_capture_option_video_info, it.joinToString(separator)) },
+        audioParts.takeIf { it.isNotEmpty() }?.let { stringResource(R.string.media_capture_option_audio_info, it.joinToString(separator)) },
+        commonParts.joinToString(separator)
+    )
+}
+
+private fun startExternalStream(context: android.content.Context, media: DetectedMedia) {
+    val mime = media.mimeType ?: when (media.kind) {
+        MediaKind.AUDIO -> "audio/*"
+        MediaKind.SUBTITLE -> "text/*"
+        MediaKind.VIDEO -> "video/*"
+    }
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(Uri.parse(media.url), mime)
+    }
+    runCatching { context.startActivity(Intent.createChooser(intent, media.url)) }
+}
+
+private fun shareDownloadLink(context: android.content.Context, url: String) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, url)
+    }
+    runCatching { context.startActivity(Intent.createChooser(intent, context.getString(R.string.link_share))) }
+}
+
+@Composable
+private fun MediaCaptureRow(
+    media: DetectedMedia,
+    onCopyLink: (String) -> Unit,
+    audio: DetectedMedia? = null,
+    audioOrdinal: Int = 0,
+    isBest: Boolean = false,
+    onPreview: (() -> Unit)? = null,
+    onDownload: (Long?, String?) -> Unit
+) {
+    val colors = LocalClintColors.current
+    val context = LocalContext.current
+    val estimate = media.estimate
+    val optionBytes = if (audio != null) optionEstimatedBytes(MediaCaptureOption(media, audio)) else estimate?.estimatedBytes
+    val audioName = audio?.let { audioTrackName(it) ?: stringResource(R.string.media_capture_audio_track_number, audioOrdinal.coerceAtLeast(1)) }
+    val optionLines = if (audio != null) mediaCaptureOptionLines(media, audio, optionBytes) else null
+    var menuExpanded by remember { mutableStateOf(false) }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 3.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(colors.cardBackground)
+            .clickable(onClick = { onDownload(optionBytes, estimate?.containerExtension) })
+            .padding(start = 14.dp, end = 2.dp, top = 10.dp, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+            Icon(
+                mediaKindIcon(media.kind),
+                contentDescription = null,
+                tint = colors.iconTint,
+                modifier = Modifier.size(22.dp)
+            )
+            if (media.kind == MediaKind.VIDEO && media.hasAudio == false) {
+                Box(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(16.dp)
+                        .clip(CircleShape)
+                        .background(colors.cardBackground),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (audio != null) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = null,
+                            tint = colors.primary,
+                            modifier = Modifier.size(12.dp)
+                        )
+                    } else {
+                        Icon(
+                            Icons.AutoMirrored.Filled.VolumeOff,
+                            contentDescription = stringResource(R.string.media_capture_no_audio_badge),
+                            tint = colors.colorError,
+                            modifier = Modifier.size(12.dp)
+                        )
+                    }
+                }
+            }
+        }
+        Column(Modifier.weight(1f).padding(start = 10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    if (audioName != null) "${mediaCaptureTitle(media)} + $audioName" else mediaCaptureTitle(media),
+                    color = colors.onSurface,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.MiddleEllipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                if (isBest) {
+                    Text(
+                        stringResource(R.string.media_capture_best_badge),
+                        color = colors.primary,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .padding(start = 6.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(colors.primary.copy(alpha = 0.16f))
+                            .padding(horizontal = 5.dp, vertical = 1.dp)
+                    )
+                }
+            }
+            if (optionLines != null) {
+                optionLines.forEach { line ->
+                    Text(
+                        line,
+                        color = colors.secondaryText,
+                        fontSize = 10.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+            } else {
+                Text(
+                    mediaCaptureSubtitle(media, estimate),
+                    color = colors.secondaryText,
+                    fontSize = 10.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+        }
+        Box {
+            IconButton(onClick = { menuExpanded = true }) {
+                Icon(
+                    Icons.Filled.MoreVert,
+                    contentDescription = stringResource(R.string.media_capture_more_options),
+                    tint = colors.iconTint.copy(alpha = 0.7f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false },
+                shape = PopupShape,
+                containerColor = colors.popupBackground,
+                border = BorderStroke(1.dp, colors.popupStroke)
+            ) {
+                ListMenuItem(Icons.Filled.PlayCircle, stringResource(R.string.media_capture_menu_stream), checked = false) {
+                    menuExpanded = false
+                    startExternalStream(context, media)
+                }
+                if (onPreview != null) {
+                    ListMenuItem(Icons.Filled.Visibility, stringResource(R.string.media_capture_menu_preview), checked = false) {
+                        menuExpanded = false
+                        onPreview()
+                    }
+                }
+                ListMenuItem(Icons.Filled.Download, stringResource(R.string.media_capture_download), checked = false) {
+                    menuExpanded = false
+                    onDownload(optionBytes, estimate?.containerExtension)
+                }
+                if (audio != null) {
+                    ListMenuItem(Icons.Filled.ContentCopy, stringResource(R.string.media_capture_menu_copy_audio_link), checked = false) {
+                        menuExpanded = false
+                        onCopyLink(audio.url)
+                    }
+                }
+                ListMenuItem(Icons.Filled.ContentCopy, stringResource(R.string.media_capture_menu_copy_link), checked = false) {
+                    menuExpanded = false
+                    onCopyLink(media.url)
+                }
+                ListMenuItem(Icons.Filled.Share, stringResource(R.string.media_capture_menu_share_link), checked = false) {
+                    menuExpanded = false
+                    shareDownloadLink(context, media.url)
+                }
+            }
+        }
+    }
+}

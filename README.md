@@ -1,0 +1,198 @@
+<div align="center">
+
+<img src="docs/icon.png" width="120" alt="Okami Browser logo" />
+
+# Okami Browser
+
+**Customizable Layered Internet Navigation Tool**
+
+Lightweight browser with ADM, ad blocking, media capture, and multi-profile support
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blueviolet.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B-blueviolet.svg)](https://developer.android.com)
+[![Stable](https://img.shields.io/badge/Stable-1.2.5-blueviolet.svg)](https://github.com/jhaiian/ClintBrowser/releases/tag/v1.2.5)
+[![Beta](https://img.shields.io/badge/Beta-1.2.5-blueviolet.svg)](https://github.com/jhaiian/ClintBrowser/releases/tag/v1.2.5)
+[![Downloads](https://img.shields.io/github/downloads/jhaiian/ClintBrowser/total?color=blueviolet)](https://github.com/jhaiian/ClintBrowser/releases)
+[![Open Source](https://img.shields.io/badge/Open%20Source-Yes-blueviolet.svg)](https://github.com/jhaiian/ClintBrowser)
+
+</div>
+
+---
+
+## What is Okami Browser?
+
+An open source Android browser with no dedicated backend and tons of features that typical browsers have, while offering a modern UI built around Material 3.
+
+We respect your privacy, so the app doesn't collect any kind of data. We don't even count how many active users there are. We collect zero data whatsoever.
+
+Okami Browser's goal is to create an Android browser that does more while being pleasant to look at and highly customizable, with no ads and no paywalls. Okami Browser is completely free to use.
+
+Looking for a Firefox-based version with extension support? Check out [Clint Gecko](https://github.com/jhaiian/ClintGecko), the GeckoView-based counterpart of the upstream project this app is based on.
+
+Okami Browser edition by **[@joseftobbias](https://github.com/joseftobbias)** (Ninja wolf)  
+Based on [Clint Browser](https://github.com/jhaiian/ClintBrowser) by **[@jhaiian](https://github.com/jhaiian)** — a solo developer from the Philippines 🇵🇭
+
+---
+
+## Screenshots
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="180" alt="Screenshot 1" /></td>
+      <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="180" alt="Screenshot 2" /></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg" width="180" alt="Screenshot 3" /></td>
+      <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" width="180" alt="Screenshot 4" /></td>
+    </tr>
+  </table>
+</div>
+
+---
+
+## Features
+
+### 🎬 Media Capture
+
+- Detects video, audio, and subtitle streams on webpages you visit
+- Supports normal video, HLS/M3U8, and DASH streams
+- Download detected media directly from the browser
+
+### ⬇️ Download Manager
+
+- Multi-threaded and multi-part downloads
+- Pause and resume
+- Download scheduler
+- Speed limiter
+- Custom download locations
+- Automatically pauses and resumes stuck downloads on its own
+- Settings grouped into everyday options and a collapsible "Advanced" section
+
+### 📜 User Scripts
+
+- Install userscripts from a URL or write your own with a built-in code editor
+- Tampermonkey-style metadata support (`@match`, `@include`, `@exclude`, `@require`, `@resource`, `@grant`)
+- GM API support, including `GM.setValue`/`GM.getValue`, `GM.xmlHttpRequest`, and `GM.notification`
+- Automatic update checks for scripts installed from a URL
+- Enable or disable individual scripts at any time
+
+### 🎨 UI & Customization
+
+Okami Browser is built with **Material 3** and **Jetpack Compose**, with a highly customizable interface.
+
+- 50 accent colors
+- Light and Dark themes
+- 5 surface intensities
+- **In total, 500 possible theme combinations**
+- Browser menu organized into labeled sections (Tabs, Page, Tools, Privacy)
+- Branded splash screen with the Okami wolf logo
+
+### 🛡️ Quiver Guard
+
+- Built-in ad and tracker blocker
+- Cosmetic and network filtering
+- Multiple filter lists
+- Per-site controls
+
+### 🚫 Website Blocker
+
+- Blocks pornography, gambling, and other unwanted categories
+- Category-based filter lists (abuse, ads, crypto, drugs, fraud, gambling, and more)
+- Add your own custom websites to block
+- Guided setup: enabling it from the browser menu opens the blocker screen if no block lists are compiled yet
+
+### 👤 Profiles
+
+- Stay signed in to several accounts on the same website at the same time
+- Each profile keeps its own cookies, logins, and site data
+- Pick a profile when opening a new tab
+- Give each profile its own name and color
+
+### 🔗 Shortcuts
+
+- Add any website to your home screen with a custom name and icon
+- Frameless mode hides the search bar and bottom bar for an app-like feel
+- Manage all your shortcuts in one place with the built-in Shortcut Manager
+
+### 🌐 Browser
+
+- Multi-tab browsing
+- Incognito mode
+- Reader Mode
+- Desktop Mode
+- Real popup windows for user-initiated `window.open` flows (OAuth and Google/Pinterest login work correctly)
+- Popup blocker: programmatic popups without a user gesture are rejected automatically
+- Popups inherit ad/tracker blocking and close automatically if their document is blocked
+- 9 built-in search engines (DuckDuckGo, Brave, Ecosia, Google, Bing, Yahoo, Startpage, Mojeek, Qwant) plus custom engines
+- Data Saver
+
+> Just download the app and explore it yourself.
+
+---
+
+## Donations
+
+### Help Keep Okami Free Forever 💜
+
+Okami is an independent, open-source project built by one developer who believes everyone deserves a customizable browsing experience without ads, paywalls, or locked features.
+
+Your donations help support continued development, maintenance, and future improvements. Every contribution, no matter how small, means a lot and helps keep Okami moving forward.
+
+Okami will always remain free. Thank you for being part of this journey. 💜
+
+[![Patreon](https://img.shields.io/badge/Support%20me-Patreon-orange?style=for-the-badge&logo=patreon)](https://patreon.com/Jhaiian)
+[![Ko-fi](https://img.shields.io/badge/Buy%20me%20a%20coffee-Ko--fi-red?style=for-the-badge&logo=ko-fi)](https://ko-fi.com/jhaiian)
+[![PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?style=for-the-badge&logo=paypal)](https://paypal.me/jhaiian)
+[![InstaPay QR](https://img.shields.io/badge/InstaPay%20QR-Philippines%20only-7C3AED?style=for-the-badge)](https://github.com/jhaiian/jhaiian/blob/main/docs/Insta%20Pay.jpg)
+
+---
+
+## Requirements
+
+- Android 8.0 (API 26) or higher
+- WebView Implementation
+
+---
+
+## Installation
+
+Download the latest APK from the [Releases](https://github.com/jhaiian/ClintBrowser/releases) page.
+
+---
+
+## Contributing
+
+Contributions, bug reports, and feature requests are welcome.
+
+1. [Open an issue](https://github.com/jhaiian/ClintBrowser/issues) to report a bug or suggest a feature.
+2. Fork the repo and create a branch for your change.
+3. Submit a pull request with a clear description.
+
+To report a crash, use the built‑in **Debug & Crash Reports** screen. It generates a pre‑filled GitHub issue template with your device info and crash log. For more details, see [Contributing.md](https://github.com/jhaiian/ClintBrowser/blob/main/Contributing.md).
+
+---
+
+## Community
+
+Join the official Okami Browser community on Discord and Reddit to share feedback, report bugs, and connect with other users.
+
+- **Discord** – [discord.gg/4kUe4yPQ32](https://discord.gg/4kUe4yPQ32)
+- **Reddit** – [reddit.com/r/ClintBrowser](https://reddit.com/r/ClintBrowser)
+
+---
+
+## License
+
+The source code of this project is licensed under the [GNU General Public License v3.0 (GPLv3)](https://github.com/jhaiian/ClintBrowser/blob/main/LICENSE).  
+
+The names "Okami" and "Okami Browser," the logo, screenshots, and all related branding assets are **trademarks** or **proprietary assets** of the author and are **not licensed under the GPL**. Use of these assets requires explicit permission from the author.
+
+All libraries used in this app have their own licenses. Please comply with their respective license terms. See [Attribution.md](https://github.com/jhaiian/ClintBrowser/blob/main/Attribution.md) for details.
+
+---
+
+## Legal
+
+- [Privacy Policy](PRIVACY_POLICY.md)
+- [Terms of Service](TERMS_OF_SERVICE.md)

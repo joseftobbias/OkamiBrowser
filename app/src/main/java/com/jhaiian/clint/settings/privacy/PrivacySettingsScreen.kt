@@ -1,0 +1,304 @@
+package com.jhaiian.clint.settings.privacy
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.ContentPasteOff
+import androidx.compose.material.icons.filled.Cookie
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.GppGood
+import androidx.compose.material.icons.filled.HideImage
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.PhonelinkLock
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.ManageAccounts
+import androidx.compose.material.icons.filled.Password
+import androidx.compose.material.icons.filled.VisibilityOff
+
+import com.jhaiian.clint.ui.ClintSwitch
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.jhaiian.clint.R
+import com.jhaiian.clint.settings.common.RowDivider
+import com.jhaiian.clint.settings.common.SettingsRow
+import com.jhaiian.clint.settings.common.SettingsScreenScaffold
+import com.jhaiian.clint.settings.common.SettingsSection
+import com.jhaiian.clint.settings.common.SettingsSectionLabel
+import com.jhaiian.clint.ui.theme.LocalClintColors
+
+@Composable
+fun PrivacySettingsScreen(
+    state: PrivacySettingsUiState,
+    onBlockThirdPartyCookiesClick: () -> Unit,
+    onCustomUserAgentClick: () -> Unit,
+    onHttpsOnlyClick: () -> Unit,
+    onDoNotTrackClick: () -> Unit,
+    onStripTrackingParamsClick: () -> Unit,
+    onGlobalPrivacyControlClick: () -> Unit,
+    onWebRtcProtectionClick: () -> Unit,
+    onClearOnExitClick: () -> Unit,
+    onClearOnExitConfirmed: (history: Boolean, cookies: Boolean, cache: Boolean, tabs: Boolean) -> Unit,
+    onAppLockClick: () -> Unit,
+    onAppLockTimeoutConfirmed: (Int) -> Unit,
+    onScreenshotBlockingClick: () -> Unit,
+    onIncognitoKeyboardClick: () -> Unit,
+    onClipboardClearConfirmed: (Int) -> Unit,
+    onAutofillClick: () -> Unit,
+    onAutofillServiceClick: () -> Unit,
+    onHistoryClick: () -> Unit,
+    onDeleteBrowsingDataClick: () -> Unit
+) {
+    val colors = LocalClintColors.current
+    val historyLabel = stringResource(R.string.clear_on_exit_history)
+    val cookiesLabel = stringResource(R.string.clear_on_exit_cookies)
+    val cacheLabel = stringResource(R.string.clear_on_exit_cache)
+    val tabsLabel = stringResource(R.string.clear_on_exit_tabs)
+    val nothingLabel = stringResource(R.string.clear_on_exit_none)
+
+    SettingsScreenScaffold {
+
+        SettingsSectionLabel(stringResource(R.string.privacy_section_privacy))
+        SettingsSection(colors.cardBackground) {
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.Cookie,
+                title = stringResource(R.string.block_third_party_cookies),
+                summary = stringResource(R.string.block_third_party_cookies_summary),
+                colors = colors,
+                onClick = onBlockThirdPartyCookiesClick,
+                trailing = {
+                    ClintSwitch(checked = state.blockThirdPartyCookies)
+                }
+            )
+            RowDivider(colors.divider)
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.Language,
+                title = stringResource(R.string.custom_user_agent),
+                summary = stringResource(R.string.custom_user_agent_summary),
+                colors = colors,
+                onClick = onCustomUserAgentClick,
+                trailing = {
+                    ClintSwitch(checked = state.customUserAgent)
+                }
+            )
+            RowDivider(colors.divider)
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.Lock,
+                title = stringResource(R.string.https_only),
+                summary = stringResource(R.string.https_only_summary),
+                colors = colors,
+                onClick = onHttpsOnlyClick,
+                trailing = {
+                    ClintSwitch(checked = state.httpsOnly)
+                }
+            )
+            RowDivider(colors.divider)
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.VisibilityOff,
+                title = stringResource(R.string.do_not_track_title),
+                summary = stringResource(R.string.do_not_track_summary),
+                colors = colors,
+                onClick = onDoNotTrackClick,
+                trailing = {
+                    ClintSwitch(checked = state.doNotTrack)
+                }
+            )
+        }
+
+        SettingsSectionLabel(stringResource(R.string.privacy_section_tracking))
+        SettingsSection(colors.cardBackground) {
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.LinkOff,
+                title = stringResource(R.string.strip_tracking_params_title),
+                summary = stringResource(R.string.strip_tracking_params_summary),
+                colors = colors,
+                onClick = onStripTrackingParamsClick,
+                trailing = {
+                    ClintSwitch(checked = state.stripTrackingParams)
+                }
+            )
+            RowDivider(colors.divider)
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.GppGood,
+                title = stringResource(R.string.global_privacy_control_title),
+                summary = stringResource(R.string.global_privacy_control_summary),
+                colors = colors,
+                onClick = onGlobalPrivacyControlClick,
+                trailing = {
+                    ClintSwitch(checked = state.globalPrivacyControl)
+                }
+            )
+            RowDivider(colors.divider)
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.Videocam,
+                title = stringResource(R.string.webrtc_protection_title),
+                summary = stringResource(R.string.webrtc_protection_summary),
+                colors = colors,
+                onClick = onWebRtcProtectionClick,
+                trailing = {
+                    ClintSwitch(checked = state.webRtcProtection)
+                }
+            )
+        }
+
+        SettingsSectionLabel(stringResource(R.string.privacy_section_device))
+        SettingsSection(colors.cardBackground) {
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.PhonelinkLock,
+                title = stringResource(R.string.app_lock_title),
+                summary = stringResource(R.string.app_lock_summary),
+                colors = colors,
+                onClick = onAppLockClick,
+                trailing = {
+                    ClintSwitch(checked = state.appLock)
+                }
+            )
+            if (state.appLock) {
+                RowDivider(colors.divider)
+                SettingsRow(
+                    icon = androidx.compose.material.icons.Icons.Filled.Timer,
+                    title = stringResource(R.string.app_lock_timeout_title),
+                    summary = stringResource(appLockTimeoutLabel(state.appLockTimeout)),
+                    colors = colors,
+                    onClick = { state.appLockTimeoutDialogOpen = true }
+                )
+            }
+            RowDivider(colors.divider)
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.HideImage,
+                title = stringResource(R.string.screenshot_blocking_title),
+                summary = stringResource(R.string.screenshot_blocking_summary),
+                colors = colors,
+                onClick = onScreenshotBlockingClick,
+                trailing = {
+                    ClintSwitch(checked = state.screenshotBlocking)
+                }
+            )
+            RowDivider(colors.divider)
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.Keyboard,
+                title = stringResource(R.string.incognito_keyboard_title),
+                summary = stringResource(R.string.incognito_keyboard_summary),
+                colors = colors,
+                onClick = onIncognitoKeyboardClick,
+                trailing = {
+                    ClintSwitch(checked = state.incognitoKeyboard)
+                }
+            )
+            RowDivider(colors.divider)
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.ContentPasteOff,
+                title = stringResource(R.string.clipboard_clear_title),
+                summary = stringResource(clipboardClearLabel(state.clipboardClearSeconds)),
+                colors = colors,
+                onClick = { state.clipboardDialogOpen = true }
+            )
+            RowDivider(colors.divider)
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.DeleteSweep,
+                title = stringResource(R.string.clear_on_exit_title),
+                summary = stringResource(R.string.clear_on_exit_summary),
+                colors = colors,
+                onClick = onClearOnExitClick,
+                trailing = {
+                    ClintSwitch(checked = state.clearOnExit)
+                }
+            )
+            if (state.clearOnExit) {
+                RowDivider(colors.divider)
+                SettingsRow(
+                    icon = androidx.compose.material.icons.Icons.Filled.Checklist,
+                    title = stringResource(R.string.clear_on_exit_items_title),
+                    summary = listOfNotNull(
+                        historyLabel.takeIf { state.clearHistory },
+                        cookiesLabel.takeIf { state.clearCookies },
+                        cacheLabel.takeIf { state.clearCache },
+                        tabsLabel.takeIf { state.clearTabs }
+                    ).joinToString(", ").ifEmpty { nothingLabel },
+                    colors = colors,
+                    onClick = { state.clearOnExitDialogOpen = true }
+                )
+            }
+        }
+
+        if (state.autofillSupported) {
+            SettingsSectionLabel(stringResource(R.string.privacy_section_autofill))
+            SettingsSection(colors.cardBackground) {
+                SettingsRow(
+                    icon = androidx.compose.material.icons.Icons.Filled.Password,
+                    title = stringResource(R.string.autofill_title),
+                    summary = stringResource(R.string.autofill_summary),
+                    colors = colors,
+                    onClick = onAutofillClick,
+                    trailing = {
+                        ClintSwitch(checked = state.autofillEnabled)
+                    }
+                )
+                RowDivider(colors.divider)
+                SettingsRow(
+                    icon = androidx.compose.material.icons.Icons.Filled.ManageAccounts,
+                    title = stringResource(R.string.autofill_service_title),
+                    summary = stringResource(
+                        if (state.autofillServiceActive) R.string.autofill_service_summary_active else R.string.autofill_service_summary_none
+                    ),
+                    colors = colors,
+                    onClick = onAutofillServiceClick
+                )
+            }
+        }
+
+        SettingsSectionLabel(stringResource(R.string.privacy_section_history))
+        SettingsSection(colors.cardBackground) {
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.History,
+                title = stringResource(R.string.history_title),
+                summary = stringResource(R.string.history_summary),
+                colors = colors,
+                onClick = onHistoryClick
+            )
+            RowDivider(colors.divider)
+            SettingsRow(
+                icon = androidx.compose.material.icons.Icons.Filled.DeleteSweep,
+                title = stringResource(R.string.delete_data_title),
+                summary = stringResource(R.string.delete_data_settings_summary),
+                colors = colors,
+                onClick = onDeleteBrowsingDataClick
+            )
+        }
+    }
+
+    if (state.appLockTimeoutDialogOpen) {
+        PrivacyChoiceDialog(
+            title = stringResource(R.string.app_lock_timeout_title),
+            values = AppLockTimeoutValues,
+            labelFor = ::appLockTimeoutLabel,
+            current = state.appLockTimeout,
+            hideStatusBar = state.hideStatusBar, hideSystemNavigation = state.hideSystemNavigation,
+            onConfirm = onAppLockTimeoutConfirmed,
+            onDismiss = { state.appLockTimeoutDialogOpen = false }
+        )
+    }
+    if (state.clipboardDialogOpen) {
+        PrivacyChoiceDialog(
+            title = stringResource(R.string.clipboard_clear_title),
+            values = ClipboardClearValues,
+            labelFor = ::clipboardClearLabel,
+            current = state.clipboardClearSeconds,
+            hideStatusBar = state.hideStatusBar, hideSystemNavigation = state.hideSystemNavigation,
+            onConfirm = onClipboardClearConfirmed,
+            onDismiss = { state.clipboardDialogOpen = false }
+        )
+    }
+    if (state.clearOnExitDialogOpen) {
+        ClearOnExitDialog(
+            history = state.clearHistory,
+            cookies = state.clearCookies,
+            cache = state.clearCache,
+            tabs = state.clearTabs,
+            hideStatusBar = state.hideStatusBar, hideSystemNavigation = state.hideSystemNavigation,
+            onConfirm = onClearOnExitConfirmed,
+            onDismiss = { state.clearOnExitDialogOpen = false }
+        )
+    }
+}

@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Local configuration (contains SDK path and signing credentials)
+local.properties
+
+# IDE
+.idea/
+*.iml
+.cxx/
+.externalNativeBuild/
+captures/
+
+# Signing keys - NEVER commit keystores or passwords
+*.keystore
+*.jks
+*.keystore.bak
+
+# OS
+.DS_Store
+Thumbs.db
